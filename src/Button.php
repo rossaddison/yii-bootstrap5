@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace Yiisoft\Yii\Bootstrap5;
 
+use BackedEnum;
 use Stringable;
 use Yiisoft\Html\Html;
 use Yiisoft\Html\Tag\A;
 use Yiisoft\Html\Tag\Button as ButtonTag;
 use Yiisoft\Html\Tag\Input;
-
-use function array_merge;
-use function array_filter;
+use Yiisoft\Widget\Widget;
+use Yiisoft\Yii\Bootstrap5\Utility\TogglerType;
 
 /**
  * Button renders a bootstrap button.
@@ -24,12 +24,12 @@ use function array_filter;
  *
  * @link https://getbootstrap.com/docs/5.3/components/buttons/
  */
-final class Button extends \Yiisoft\Widget\Widget
+final class Button extends Widget
 {
     private const NAME = 'btn';
     private array $attributes = [];
     private ButtonVariant|null $buttonVariant = ButtonVariant::SECONDARY;
-    private array $cssClass = [];
+    private array $cssClasses = [];
     private bool $disabled = false;
     private bool|string $id = true;
     private string|Stringable $label = '';
@@ -38,13 +38,18 @@ final class Button extends \Yiisoft\Widget\Widget
     /**
      * Whether the button should be a link.
      *
-     * @param string|Stringable $label The content of the button.
-     * @param string|null $url The URL of the link button.
+     * @param string|Stringable $label The content.
+     * @param string|null $url The URL of the link.
      * @param array $constructorArguments The constructor arguments.
      * @param array $config The configuration.
      * @param string|null $theme The theme.
      *
      * @return self A new instance with the button as a link.
+     *
+     * Example usage:
+     * ```php
+     * echo Button::link('Button', '/path/to/page')->render();
+     * ```
      */
     public static function link(
         string|Stringable $label = '',
@@ -59,12 +64,17 @@ final class Button extends \Yiisoft\Widget\Widget
     /**
      * Get an instance of a reset button input.
      *
-     * @param string|Stringable $value The content of the button. By default, it's "Reset".
+     * @param string|Stringable $value The content. By default, it's "Reset".
      * @param array $constructorArguments The constructor arguments.
      * @param array $config The configuration.
      * @param string|null $theme The theme.
      *
      * @return self A new instance with the input of "reset" type.
+     *
+     * Example usage:
+     * ```php
+     * echo Button::resetInput('Reset')->render();
+     * ```
      */
     public static function resetInput(
         string|Stringable $value = 'Reset',
@@ -78,12 +88,17 @@ final class Button extends \Yiisoft\Widget\Widget
     /**
      * Get an instance of a submit button input.
      *
-     * @param string|Stringable $value The content of the button. By default, it's "Submit".
+     * @param string|Stringable $value The content. By default, it's "Submit".
      * @param array $constructorArguments The constructor arguments.
      * @param array $config The configuration.
      * @param string|null $theme The theme.
      *
      * @return self A new instance of an input with "submit" type.
+     *
+     * Example usage:
+     * ```php
+     * echo Button::submitInput('Submit')->render();
+     * ```
      */
     public static function submitInput(
         string|Stringable $value = 'Submit',
@@ -97,12 +112,17 @@ final class Button extends \Yiisoft\Widget\Widget
     /**
      * Whether the button should be a reset button.
      *
-     * @param string|Stringable $value The content of the button. For default, it is 'Reset'.
+     * @param string|Stringable $value The content. For default, it is 'Reset'.
      * @param array $constructorArguments The constructor arguments.
      * @param array $config The configuration.
      * @param string|null $theme The theme.
      *
      * @return self A new instance with the button as a reset button.
+     *
+     * Example usage:
+     * ```php
+     * echo Button::reset('Reset')->render();
+     * ```
      */
     public static function reset(
         string|Stringable $value = 'Reset',
@@ -114,14 +134,19 @@ final class Button extends \Yiisoft\Widget\Widget
     }
 
     /**
-     * Whether the button should be a submit button.
+     * Whether the button should be a "submit" button.
      *
-     * @param string|Stringable $value The content of the button. For default, it is 'Submit'.
+     * @param string|Stringable $value The content. For default, it is "Submit".
      * @param array $constructorArguments The constructor arguments.
      * @param array $config The configuration.
      * @param string|null $theme The theme.
      *
-     * @return self A new instance with the button as a submit button.
+     * @return self A new instance with the button as a "submit" button.
+     *
+     * Example usage:
+     * ```php
+     * echo Button::submit('Submit')->render();
+     * ```
      */
     public static function submit(
         string|Stringable $value = 'Submit',
@@ -133,279 +158,314 @@ final class Button extends \Yiisoft\Widget\Widget
     }
 
     /**
-     * Sets the button to be active.
+     * Sets the active state.
      *
-     * @param bool $value Whether the button should be active.
+     * @param bool $enabled Whether the button should be active.
      *
      * @return self A new instance with the button active.
+     *
+     * Example usage:
+     * ```php
+     * $button->active();
+     * ```
      */
-    public function active(bool $value = true): self
+    public function active(bool $enabled = true): self
     {
-        $activeClass = $value === true ? 'active' : null;
-        $ariaPressed = $value === true ? 'true' : null;
-        $dataBsToggle = $value === true ? 'button' : null;
-
-        $new = $this->toggle($dataBsToggle);
-        $new->attributes['aria-pressed'] = $ariaPressed;
-        $new->cssClass['active'] = $activeClass;
-
-        return $new;
+        return $this
+            ->toggle($enabled ? TogglerType::BUTTON : null)
+            ->addClass($enabled ? 'active' : null)
+            ->attribute('aria-pressed', $enabled ? 'true' : null);
     }
 
     /**
-     * Adds a sets of attributes for the button component.
+     * Adds a sets of attributes.
      *
-     * @param array $values Attribute values indexed by attribute names. e.g. `['id' => 'my-button']`.
+     * @param array $attributes Attribute values indexed by attribute names. e.g. `['id' => 'my-id']`.
      *
      * @return self A new instance with the specified attributes added.
+     *
+     * Example usage:
+     * ```php
+     * $button->addAttributes(['data-id' => '123']);
+     * ```
      */
-    public function addAttributes(array $values): self
+    public function addAttributes(array $attributes): self
     {
         $new = clone $this;
-        $new->attributes = array_merge($this->attributes, $values);
+        $new->attributes = [...$this->attributes, ...$attributes];
 
         return $new;
     }
 
     /**
-     * Adds one or more CSS classes to the existing classes of the button component.
+     * Adds one or more CSS classes to the existing classes.
      *
      * Multiple classes can be added by passing them as separate arguments. `null` values are filtered out
      * automatically.
      *
-     * @param string|null ...$value One or more CSS class names to add. Pass `null` to skip adding a class.
-     * For example:
-     *
-     * ```php
-     * $button->addClass('custom-class', null, 'another-class');
-     * ```
+     * @param BackedEnum|string|null ...$class One or more CSS class names to add. Pass `null` to skip adding a class.
      *
      * @return self A new instance with the specified CSS classes added to existing ones.
      *
      * @link https://html.spec.whatwg.org/#classes
+     *
+     * Example usage:
+     * ```php
+     * $button->addClass('custom-class', null, 'another-class', BackGroundColor::PRIMARY);
+     * ```
      */
-    public function addClass(string|null ...$value): self
+    public function addClass(BackedEnum|string|null ...$class): self
     {
         $new = clone $this;
-        $new->cssClass = array_merge(
-            $new->cssClass,
-            array_filter($value, static fn ($v) => $v !== null)
-        );
+        $new->cssClasses = [...$this->cssClasses, ...$class];
 
         return $new;
     }
 
     /**
-     * Adds a CSS style for the button component.
+     * Adds a CSS style.
      *
-     * @param array|string $value The CSS style for the button component. If an array, the values will be separated by
-     * a space. If a string, it will be added as is. For example, 'color: red;'. If the value is an array, the values
-     * will be separated by a space. e.g., ['color' => 'red', 'font-weight' => 'bold'] will be rendered as
-     * 'color: red; font-weight: bold;'.
+     * @param array|string $style The CSS style. If an array, the values will be separated by a space. If a string, it
+     * will be added as is. For example, `color: red`. If the value is an array, the values will be separated by a
+     * space. e.g., `['color' => 'red', 'font-weight' => 'bold']` will be rendered as `color: red; font-weight: bold;`.
      * @param bool $overwrite Whether to overwrite existing styles with the same name. If `false`, the new value will be
      * appended to the existing one.
      *
      * @return self A new instance with the specified CSS style value added.
+     *
+     * Example usage:
+     * ```php
+     * $button->addCssStyle('color: red');
+     *
+     * // or
+     * $button->addCssStyle(['color' => 'red', 'font-weight' => 'bold']);
+     * ```
      */
-    public function addCssStyle(array|string $value, bool $overwrite = true): self
+    public function addCssStyle(array|string $style, bool $overwrite = true): self
     {
         $new = clone $this;
-        Html::addCssStyle($new->attributes, $value, $overwrite);
+        Html::addCssStyle($new->attributes, $style, $overwrite);
 
         return $new;
     }
 
     /**
-     * Sets the 'aria-expanded' attribute for the button, indicating whether the element is currently expanded or
-     * collapsed.
+     * Sets the 'aria-expanded' attribute, indicating whether the element is currently expanded or collapsed.
      *
-     * @param bool $value The value to set for the 'aria-expanded' attribute.
+     * @param bool $enabled The value to set for the 'aria-expanded' attribute.
      *
      * @return self A new instance with the specified 'aria-expanded' value.
      *
      * @link https://www.w3.org/TR/wai-aria-1.1/#aria-expanded
+     *
+     * Example usage:
+     * ```php
+     * $button->ariaExpanded();
+     * ```
      */
-    public function ariaExpanded(bool $value = true): self
+    public function ariaExpanded(bool $enabled = true): self
+    {
+        return $this->attribute('aria-expanded', $enabled ? 'true' : 'false');
+    }
+
+    /**
+     * Adds a sets attribute value.
+     *
+     * @param string $name The attribute name.
+     * @param mixed $value The attribute value.
+     *
+     * @return self A new instance with the specified attribute added.
+     *
+     * Example usage:
+     * ```php
+     * $button->attribute('data-id', '123');
+     * ```
+     */
+    public function attribute(string $name, mixed $value): self
     {
         $new = clone $this;
-        $new->attributes['aria-expanded'] = $value === true ? 'true' : 'false';
+        $new->attributes[$name] = $value;
 
         return $new;
     }
 
     /**
-     * Sets the HTML attributes for the button component.
+     * Sets the HTML attributes.
      *
-     * @param array $values Attribute values indexed by attribute names.
+     * @param array $attributes Attribute values indexed by attribute names.
      *
      * @return self A new instance with the specified attributes.
      *
      * @see {\Yiisoft\Html\Html::renderTagAttributes()} for details on how attributes are being rendered.
+     *
+     * Example usage:
+     * ```php
+     * $button->attributes(['data-id' => '123']);
+     * ```
      */
-    public function attributes(array $values): self
+    public function attributes(array $attributes): self
     {
         $new = clone $this;
-        $new->attributes = $values;
+        $new->attributes = $attributes;
 
         return $new;
     }
 
     /**
-     * Replaces all existing CSS classes of the button component with the provided ones.
+     * Replaces all existing CSS classes with the specified one(s).
      *
      * Multiple classes can be added by passing them as separate arguments. `null` values are filtered out
      * automatically.
      *
-     * @param string|null ...$value One or more CSS class names to set. Pass `null` to skip setting a class.
-     * For example:
-     *
-     * ```php
-     * $button->class('custom-class', null, 'another-class');
-     * ```
+     * @param BackedEnum|string|null ...$class One or more CSS class names to set. Pass `null` to skip setting a class.
      *
      * @return self A new instance with the specified CSS classes set.
+     *
+     * Example usage:
+     * ```php
+     * $button->class('custom-class', null, 'another-class', BackGroundColor::PRIMARY);
+     * ```
      */
-    public function class(string|null ...$value): self
+    public function class(BackedEnum|string|null ...$class): self
     {
         $new = clone $this;
-        $new->cssClass = array_filter($value, static fn ($v) => $v !== null);
+        $new->cssClasses = $class;
 
         return $new;
     }
 
     /**
-     * Add `text-nowrap` CSS class to the button component to prevent text from wrapping.
+     * Add `text-nowrap` CSS class to prevent text from wrapping.
      *
      * @return self A new instance with the text wrapping disabled.
+     *
+     * Example usage:
+     * ```php
+     * $button->disableTextWrapping();
+     * ```
      */
     public function disableTextWrapping(): self
     {
-        $new = clone $this;
-        $new->cssClass['text-nowrap'] = 'text-nowrap';
-
-        return $new;
+        return $this->addClass('text-nowrap');
     }
 
     /**
-     * Sets the button to be disabled.
+     * Sets the disable state.
      *
-     * @param bool $value Whether the button should be disabled.
+     * @param bool $enabled Whether the button should be disabled.
      *
      * @return self A new instance with the button disabled.
+     *
+     * Example usage:
+     * ```php
+     * $button->disabled();
+     * ```
      */
-    public function disabled(bool $value = true): self
+    public function disabled(bool $enabled = true): self
     {
         $new = clone $this;
-        $new->disabled = $value;
+        $new->disabled = $enabled;
 
         return $new;
     }
 
     /**
-     * Sets the ID of the button component.
+     * Sets the ID.
      *
-     * @param bool|string $value The ID of the button component. If `true`, an ID will be generated automatically.
+     * @param bool|string $id The ID of the component. If `true`, an ID will be generated automatically.
      *
      * @return self A new instance with the specified ID.
+     *
+     * Example usage:
+     * ```php
+     * $button->id('my-id');
+     * ```
      */
-    public function id(bool|string $value): self
+    public function id(bool|string $id): self
     {
         $new = clone $this;
-        $new->id = $value;
+        $new->id = $id;
 
         return $new;
     }
 
     /**
-     * The button label.
+     * The label.
      *
-     * @param string|Stringable $value The label to display on the button.
+     * @param string|Stringable $label The label to display on the button.
      * @param bool $encode Whether the label value should be HTML-encoded. Use this when rendering user-generated
      * content to prevent XSS attacks.
      *
      * @return self A new instance with the specified label value.
+     *
+     * Example usage:
+     * ```php
+     * $button->label('Button');
+     * ```
      */
-    public function label(string|Stringable $value, bool $encode = true): self
+    public function label(string|Stringable $label, bool $encode = true): self
     {
         if ($encode) {
-            $value = Html::encode($value);
+            $label = Html::encode($label);
         }
 
         $new = clone $this;
-        $new->label = $value;
+        $new->label = $label;
 
         return $new;
     }
 
     /**
-     * Sets the button size to be large.
+     * Sets the size.
      *
-     * @return self A new instance with the button as a large button.
+     * @param ButtonSize|null $size The size. If `null`, the size will not be set.
+     *
+     * @return self A new instance with the specified size.
+     *
+     * Example usage:
+     * ```php
+     * $button->size(ButtonSize::LARGE);
+     * ```
      */
-    public function largeSize(): self
+    public function size(ButtonSize|null $size): self
     {
-        $new = clone $this;
-        $new->cssClass['size'] = 'btn-lg';
-
-        return $new;
+        return $this->addClass($size?->value);
     }
 
     /**
-     * Sets the button size to be normal.
+     * Sets the toggle behavior by the `data-bs-toggle` attribute, enabling interactive functionality such as `button`,
+     * `dropdown`, `modal`, and `tooltip`.
      *
-     * @return self A new instance with the button as a normal button.
+     * @param TogglerType|null $type The toggle type to be set. If `null`, the toggle behavior will not be set.
+     *
+     * @return self A new instance with the specified toggle behavior.
+     *
+     * Example usage:
+     * ```php
+     * $button->toggle(TogglerType::BUTTON);
+     * ```
      */
-    public function normalSize(): self
+    public function toggle(TogglerType|null $type = TogglerType::BUTTON): self
     {
-        $new = clone $this;
-        $new->cssClass['size'] = null;
-
-        return $new;
+        return $this->attribute('data-bs-toggle', $type?->value);
     }
 
     /**
-     * Sets the button size to be small.
+     * Sets the type.
      *
-     * @return self A new instance with the button as a small button.
+     * @param ButtonType $type The type.
+     *
+     * @return self A new instance with the specified type.
+     *
+     * Example usage:
+     * ```php
+     * $button->type(ButtonType::LINK);
+     * ```
      */
-    public function smallSize(): self
+    public function type(ButtonType $type): self
     {
         $new = clone $this;
-        $new->cssClass['size'] = 'btn-sm';
-
-        return $new;
-    }
-
-    /**
-     * Sets the Bootstrap toggle behavior by the `data-bs-toggle` attribute, enabling interactive functionality such as
-     * `button`, `dropdown`, `modal`, and `tooltip`.
-     *
-     * @param string|null $value The Bootstrap toggle type to be set. Common values include: `button`, `dropdown`,
-     * `modal`, `tooltip`, `popover`, `collapse`, or `null` to remove.
-     * Defaults to `button`.
-     *
-     * @return self A new instance with the specified Bootstrap toggle behavior.
-     */
-    public function toggle(string|null $value = 'button'): self
-    {
-        $new = clone $this;
-        $new->attributes['data-bs-toggle'] = $value;
-
-        return $new;
-    }
-
-    /**
-     * Sets the button type. The following options are allowed:
-     * - `ButtonType::LINK`: A link button.
-     * - `ButtonType::RESET`: A reset button.
-     * - `ButtonType::RESET_INPUT`: A reset button input.
-     * - `ButtonType::SUBMIT`: A submit button.
-     * - `ButtonType::SUBMIT_INPUT`: A submit button input.
-     */
-    public function type(ButtonType $value): self
-    {
-        $new = clone $this;
-        $new->tag = match ($value) {
+        $new->tag = match ($type) {
             ButtonType::LINK => A::tag(),
             ButtonType::RESET => ButtonTag::reset(''),
             ButtonType::RESET_INPUT => Input::resetButton(),
@@ -417,56 +477,44 @@ final class Button extends \Yiisoft\Widget\Widget
     }
 
     /**
-     * Sets the URL of the link button.
+     * Sets the URL of the link.
      *
-     * @param string|null $value The URL of the link button.
+     * @param string|null $url The URL of the link.
      *
      * @return self A new instance with the specified URL.
+     *
+     * Example usage:
+     * ```php
+     * $button->url('/path/to/page');
+     * ```
      */
-    public function url(string|null $value): self
+    public function url(string|null $url): self
+    {
+        return $this->attribute('href', $url);
+    }
+
+    /**
+     * Set the variant.
+     *
+     * @param ButtonVariant|null $variant The variant. If `null`, the variant will not be set.
+     *
+     * @return self A new instance with the specified variant.
+     *
+     * Example usage:
+     * ```php
+     * $button->variant(ButtonVariant::PRIMARY);
+     * ```
+     */
+    public function variant(ButtonVariant|null $variant): self
     {
         $new = clone $this;
-        $new->attributes['href'] = $value;
+        $new->buttonVariant = $variant;
 
         return $new;
     }
 
     /**
-     * Set the button variant. The following options are allowed:
-     *
-     * - `ButtonVariant::PRIMARY`: Primary button.
-     * - `ButtonVariant::SECONDARY`: Secondary button.
-     * - `ButtonVariant::SUCCESS`: Success button.
-     * - `ButtonVariant::DANGER`: Danger button.
-     * - `ButtonVariant::WARNING`: Warning button.
-     * - `ButtonVariant::INFO`: Info button.
-     * - `ButtonVariant::LIGHT`: Light button.
-     * - `ButtonVariant::DARK`: Dark button.
-     * - `ButtonVariant::LINK`: Link button.
-     * - `ButtonVariant::OUTLINE_PRIMARY`: Primary outline button.
-     * - `ButtonVariant::OUTLINE_SECONDARY`: Secondary outline button.
-     * - `ButtonVariant::OUTLINE_SUCCESS`: Success outline button.
-     * - `ButtonVariant::OUTLINE_DANGER`: Danger outline button.
-     * - `ButtonVariant::OUTLINE_WARNING`: Warning outline button.
-     * - `ButtonVariant::OUTLINE_INFO`: Info outline button.
-     * - `ButtonVariant::OUTLINE_LIGHT`: Light outline button.
-     * - `ButtonVariant::OUTLINE_DARK`: Dark outline button.
-     * - `null`: No variant set.
-     *
-     * @param ButtonVariant $value The button variant. If `null`, the variant will not be set.
-     *
-     * @return self A new instance with the specified button variant.
-     */
-    public function variant(ButtonVariant|null $value): self
-    {
-        $new = clone $this;
-        $new->buttonVariant = $value;
-
-        return $new;
-    }
-
-    /**
-     * Run the button widget.
+     * Run the widget.
      *
      * @return string The HTML representation of the element.
      */
@@ -476,19 +524,12 @@ final class Button extends \Yiisoft\Widget\Widget
         $classes = $attributes['class'] ?? null;
         $tag = $this->tag ?? ButtonTag::tag()->button('');
 
-        /** @psalm-var non-empty-string|null $id */
-        $id = match ($this->id) {
-            true => $attributes['id'] ?? Html::generateId(self::NAME . '-'),
-            '', false => null,
-            default => $this->id,
-        };
-
         unset($attributes['class'], $attributes['id']);
 
         Html::addCssClass($attributes, [self::NAME, $this->buttonVariant?->value, $classes]);
 
         $attributes = $this->setAttributes($attributes);
-        $tag = $tag->addAttributes($attributes)->addClass(...$this->cssClass)->id($id);
+        $tag = $tag->addAttributes($attributes)->addClass(...$this->cssClasses)->id($this->getId());
 
         if ($tag instanceof Input) {
             if ($this->label !== '') {
@@ -498,7 +539,23 @@ final class Button extends \Yiisoft\Widget\Widget
             return $tag->render();
         }
 
-        return $tag->addContent($this->label)->encode(false)->render();
+        return $tag->addContent($this->label)->addClass()->encode(false)->render();
+    }
+
+    /**
+     * Generates the ID.
+     *
+     * @return string|null The generated ID.
+     *
+     * @psalm-return non-empty-string|null The generated ID.
+     */
+    private function getId(): string|null
+    {
+        return match ($this->id) {
+            true => $this->attributes['id'] ?? Html::generateId(self::NAME . '-'),
+            '', false => null,
+            default => $this->id,
+        };
     }
 
     /**

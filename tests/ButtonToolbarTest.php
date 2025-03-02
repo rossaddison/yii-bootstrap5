@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Yiisoft\Yii\Bootstrap5\Tests;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\TestCase;
 use Yiisoft\Html\Tag\Div;
 use Yiisoft\Html\Tag\Input;
 use Yiisoft\Yii\Bootstrap5\Button;
@@ -11,20 +13,20 @@ use Yiisoft\Yii\Bootstrap5\ButtonGroup;
 use Yiisoft\Yii\Bootstrap5\ButtonToolbar;
 use Yiisoft\Yii\Bootstrap5\ButtonVariant;
 use Yiisoft\Yii\Bootstrap5\Tests\Support\Assert;
+use Yiisoft\Yii\Bootstrap5\Utility\BackgroundColor;
 
 /**
  * Tests for `ButtonToolbar` widget.
- *
- * @group button-toolbar
  */
-final class ButtonToolbarTest extends \PHPUnit\Framework\TestCase
+#[Group('button-toolbar')]
+final class ButtonToolbarTest extends TestCase
 {
     public function testAddAttributes(): void
     {
         Assert::equalsWithoutLE(
             <<<HTML
-            <div class="btn-toolbar test-class-definition" data-id="1" aria-label="Toolbar with button groups" role="toolbar">
-            <div class="btn-group me-2" aria-label="First group" role="group">
+            <div class="btn-toolbar" data-id="123" role="toolbar">
+            <div class="btn-group" role="group">
             <button type="button" class="btn btn-primary">1</button>
             <button type="button" class="btn btn-primary">2</button>
             <button type="button" class="btn btn-primary">3</button>
@@ -32,13 +34,10 @@ final class ButtonToolbarTest extends \PHPUnit\Framework\TestCase
             </div>
             </div>
             HTML,
-            ButtonToolbar::widget(config: ['attributes()' => [['class' => 'test-class-definition']]])
-                ->addAttributes(['data-id' => '1'])
-                ->ariaLabel('Toolbar with button groups')
+            ButtonToolbar::widget()
+                ->addAttributes(['data-id' => '123'])
                 ->buttonGroups(
                     ButtonGroup::widget()
-                        ->addClass('me-2')
-                        ->ariaLabel('First group')
                         ->buttons(
                             Button::widget()->id(false)->label('1')->variant(ButtonVariant::PRIMARY),
                             Button::widget()->id(false)->label('2')->variant(ButtonVariant::PRIMARY),
@@ -55,12 +54,9 @@ final class ButtonToolbarTest extends \PHPUnit\Framework\TestCase
     public function testAddClass(): void
     {
         $buttonToolbar = ButtonToolbar::widget()
-            ->addClass('test-class', null)
-            ->ariaLabel('Toolbar with button groups')
+            ->addClass('test-class', null, BackgroundColor::PRIMARY)
             ->buttonGroups(
                 ButtonGroup::widget()
-                    ->addClass('me-2')
-                    ->ariaLabel('First group')
                     ->buttons(
                         Button::widget()->id(false)->label('1')->variant(ButtonVariant::PRIMARY),
                         Button::widget()->id(false)->label('2')->variant(ButtonVariant::PRIMARY),
@@ -73,8 +69,8 @@ final class ButtonToolbarTest extends \PHPUnit\Framework\TestCase
 
         Assert::equalsWithoutLE(
             <<<HTML
-            <div class="btn-toolbar test-class" aria-label="Toolbar with button groups" role="toolbar">
-            <div class="btn-group me-2" aria-label="First group" role="group">
+            <div class="btn-toolbar test-class bg-primary" role="toolbar">
+            <div class="btn-group" role="group">
             <button type="button" class="btn btn-primary">1</button>
             <button type="button" class="btn btn-primary">2</button>
             <button type="button" class="btn btn-primary">3</button>
@@ -87,8 +83,8 @@ final class ButtonToolbarTest extends \PHPUnit\Framework\TestCase
 
         Assert::equalsWithoutLE(
             <<<HTML
-            <div class="btn-toolbar test-class test-class-1 test-class-2" aria-label="Toolbar with button groups" role="toolbar">
-            <div class="btn-group me-2" aria-label="First group" role="group">
+            <div class="btn-toolbar test-class bg-primary test-class-1 test-class-2" role="toolbar">
+            <div class="btn-group" role="group">
             <button type="button" class="btn btn-primary">1</button>
             <button type="button" class="btn btn-primary">2</button>
             <button type="button" class="btn btn-primary">3</button>
@@ -100,12 +96,102 @@ final class ButtonToolbarTest extends \PHPUnit\Framework\TestCase
         );
     }
 
-    public function testAttributes(): void
+    public function testAddCssStyle(): void
+    {
+        $buttonToolbar = ButtonToolbar::widget()
+            ->addCssStyle('color: red;')
+            ->buttonGroups(
+                ButtonGroup::widget()
+                    ->buttons(
+                        Button::widget()->id(false)->label('1')->variant(ButtonVariant::PRIMARY),
+                        Button::widget()->id(false)->label('2')->variant(ButtonVariant::PRIMARY),
+                        Button::widget()->id(false)->label('3')->variant(ButtonVariant::PRIMARY),
+                        Button::widget()->id(false)->label('4')->variant(ButtonVariant::PRIMARY),
+                    )
+                    ->id(false),
+            )
+            ->id(false);
+
+        Assert::equalsWithoutLE(
+            <<<HTML
+            <div class="btn-toolbar" style="color: red;" role="toolbar">
+            <div class="btn-group" role="group">
+            <button type="button" class="btn btn-primary">1</button>
+            <button type="button" class="btn btn-primary">2</button>
+            <button type="button" class="btn btn-primary">3</button>
+            <button type="button" class="btn btn-primary">4</button>
+            </div>
+            </div>
+            HTML,
+            $buttonToolbar->render(),
+        );
+
+        Assert::equalsWithoutLE(
+            <<<HTML
+            <div class="btn-toolbar" style="color: red; font-weight: bold;" role="toolbar">
+            <div class="btn-group" role="group">
+            <button type="button" class="btn btn-primary">1</button>
+            <button type="button" class="btn btn-primary">2</button>
+            <button type="button" class="btn btn-primary">3</button>
+            <button type="button" class="btn btn-primary">4</button>
+            </div>
+            </div>
+            HTML,
+            $buttonToolbar->addCssStyle('font-weight: bold;')->render(),
+        );
+    }
+
+    public function testAddCssStyleWithOverwriteFalse(): void
+    {
+        $buttonToolbar = ButtonToolbar::widget()
+            ->addCssStyle('color: red;')
+            ->buttonGroups(
+                ButtonGroup::widget()
+                    ->buttons(
+                        Button::widget()->id(false)->label('1')->variant(ButtonVariant::PRIMARY),
+                        Button::widget()->id(false)->label('2')->variant(ButtonVariant::PRIMARY),
+                        Button::widget()->id(false)->label('3')->variant(ButtonVariant::PRIMARY),
+                        Button::widget()->id(false)->label('4')->variant(ButtonVariant::PRIMARY),
+                    )
+                    ->id(false),
+            )
+            ->id(false);
+
+        Assert::equalsWithoutLE(
+            <<<HTML
+            <div class="btn-toolbar" style="color: red;" role="toolbar">
+            <div class="btn-group" role="group">
+            <button type="button" class="btn btn-primary">1</button>
+            <button type="button" class="btn btn-primary">2</button>
+            <button type="button" class="btn btn-primary">3</button>
+            <button type="button" class="btn btn-primary">4</button>
+            </div>
+            </div>
+            HTML,
+            $buttonToolbar->render(),
+        );
+
+        Assert::equalsWithoutLE(
+            <<<HTML
+            <div class="btn-toolbar" style="color: red;" role="toolbar">
+            <div class="btn-group" role="group">
+            <button type="button" class="btn btn-primary">1</button>
+            <button type="button" class="btn btn-primary">2</button>
+            <button type="button" class="btn btn-primary">3</button>
+            <button type="button" class="btn btn-primary">4</button>
+            </div>
+            </div>
+            HTML,
+            $buttonToolbar->addCssStyle('color: blue;', false)->render(),
+        );
+    }
+
+    public function testAriaLabel(): void
     {
         Assert::equalsWithoutLE(
             <<<HTML
-            <div class="btn-toolbar" data-id="1" aria-label="Toolbar with button groups" role="toolbar">
-            <div class="btn-group me-2" aria-label="First group" role="group">
+            <div class="btn-toolbar" aria-label="Toolbar with button groups" role="toolbar">
+            <div class="btn-group" role="group">
             <button type="button" class="btn btn-primary">1</button>
             <button type="button" class="btn btn-primary">2</button>
             <button type="button" class="btn btn-primary">3</button>
@@ -114,12 +200,9 @@ final class ButtonToolbarTest extends \PHPUnit\Framework\TestCase
             </div>
             HTML,
             ButtonToolbar::widget()
-                ->attributes(['data-id' => '1'])
                 ->ariaLabel('Toolbar with button groups')
                 ->buttonGroups(
                     ButtonGroup::widget()
-                        ->addClass('me-2')
-                        ->ariaLabel('First group')
                         ->buttons(
                             Button::widget()->id(false)->label('1')->variant(ButtonVariant::PRIMARY),
                             Button::widget()->id(false)->label('2')->variant(ButtonVariant::PRIMARY),
@@ -133,12 +216,12 @@ final class ButtonToolbarTest extends \PHPUnit\Framework\TestCase
         );
     }
 
-    public function testAttributesWithId(): void
+    public function testAttributes(): void
     {
         Assert::equalsWithoutLE(
             <<<HTML
-            <div id="test-id" class="btn-toolbar" data-id="1" aria-label="Toolbar with button groups" role="toolbar">
-            <div class="btn-group me-2" aria-label="First group" role="group">
+            <div class="btn-toolbar" data-id="123" role="toolbar">
+            <div class="btn-group" role="group">
             <button type="button" class="btn btn-primary">1</button>
             <button type="button" class="btn btn-primary">2</button>
             <button type="button" class="btn btn-primary">3</button>
@@ -147,12 +230,9 @@ final class ButtonToolbarTest extends \PHPUnit\Framework\TestCase
             </div>
             HTML,
             ButtonToolbar::widget()
-                ->attributes(['data-id' => '1', 'id' => 'test-id'])
-                ->ariaLabel('Toolbar with button groups')
+                ->attribute('data-id', '123')
                 ->buttonGroups(
                     ButtonGroup::widget()
-                        ->addClass('me-2')
-                        ->ariaLabel('First group')
                         ->buttons(
                             Button::widget()->id(false)->label('1')->variant(ButtonVariant::PRIMARY),
                             Button::widget()->id(false)->label('2')->variant(ButtonVariant::PRIMARY),
@@ -161,6 +241,7 @@ final class ButtonToolbarTest extends \PHPUnit\Framework\TestCase
                         )
                         ->id(false),
                 )
+                ->id(false)
                 ->render(),
         );
     }
@@ -169,8 +250,8 @@ final class ButtonToolbarTest extends \PHPUnit\Framework\TestCase
     {
         Assert::equalsWithoutLE(
             <<<HTML
-            <div class="btn-toolbar custom-class another-class" aria-label="Toolbar with button groups" role="toolbar">
-            <div class="btn-group me-2" aria-label="First group" role="group">
+            <div class="btn-toolbar custom-class another-class bg-primary" role="toolbar">
+            <div class="btn-group" role="group">
             <button type="button" class="btn btn-primary">1</button>
             <button type="button" class="btn btn-primary">2</button>
             <button type="button" class="btn btn-primary">3</button>
@@ -179,12 +260,9 @@ final class ButtonToolbarTest extends \PHPUnit\Framework\TestCase
             </div>
             HTML,
             ButtonToolbar::widget()
-                ->ariaLabel('Toolbar with button groups')
                 ->addClass('test-class')
                 ->buttonGroups(
                     ButtonGroup::widget()
-                        ->addClass('me-2')
-                        ->ariaLabel('First group')
                         ->buttons(
                             Button::widget()->id(false)->label('1')->variant(ButtonVariant::PRIMARY),
                             Button::widget()->id(false)->label('2')->variant(ButtonVariant::PRIMARY),
@@ -193,7 +271,7 @@ final class ButtonToolbarTest extends \PHPUnit\Framework\TestCase
                         )
                         ->id(false),
                 )
-                ->class('custom-class', 'another-class')
+                ->class('custom-class', 'another-class', BackgroundColor::PRIMARY)
                 ->id(false)
                 ->render(),
         );
@@ -203,8 +281,8 @@ final class ButtonToolbarTest extends \PHPUnit\Framework\TestCase
     {
         Assert::equalsWithoutLE(
             <<<HTML
-            <div id="test" class="btn-toolbar" aria-label="Toolbar with button groups" role="toolbar">
-            <div class="btn-group me-2" aria-label="First group" role="group">
+            <div id="test-id" class="btn-toolbar" role="toolbar">
+            <div class="btn-group" role="group">
             <button type="button" class="btn btn-primary">1</button>
             <button type="button" class="btn btn-primary">2</button>
             <button type="button" class="btn btn-primary">3</button>
@@ -213,11 +291,8 @@ final class ButtonToolbarTest extends \PHPUnit\Framework\TestCase
             </div>
             HTML,
             ButtonToolbar::widget()
-                ->ariaLabel('Toolbar with button groups')
                 ->buttonGroups(
                     ButtonGroup::widget()
-                        ->addClass('me-2')
-                        ->ariaLabel('First group')
                         ->buttons(
                             Button::widget()->id(false)->label('1')->variant(ButtonVariant::PRIMARY),
                             Button::widget()->id(false)->label('2')->variant(ButtonVariant::PRIMARY),
@@ -226,7 +301,7 @@ final class ButtonToolbarTest extends \PHPUnit\Framework\TestCase
                         )
                         ->id(false),
                 )
-                ->id('test')
+                ->id('test-id')
                 ->render(),
         );
     }
@@ -235,8 +310,8 @@ final class ButtonToolbarTest extends \PHPUnit\Framework\TestCase
     {
         Assert::equalsWithoutLE(
             <<<HTML
-            <div class="btn-toolbar" aria-label="Toolbar with button groups" role="toolbar">
-            <div class="btn-group me-2" aria-label="First group" role="group">
+            <div class="btn-toolbar" role="toolbar">
+            <div class="btn-group" role="group">
             <button type="button" class="btn btn-primary">1</button>
             <button type="button" class="btn btn-primary">2</button>
             <button type="button" class="btn btn-primary">3</button>
@@ -245,11 +320,8 @@ final class ButtonToolbarTest extends \PHPUnit\Framework\TestCase
             </div>
             HTML,
             ButtonToolbar::widget()
-                ->ariaLabel('Toolbar with button groups')
                 ->buttonGroups(
                     ButtonGroup::widget()
-                        ->addClass('me-2')
-                        ->ariaLabel('First group')
                         ->buttons(
                             Button::widget()->id(false)->label('1')->variant(ButtonVariant::PRIMARY),
                             Button::widget()->id(false)->label('2')->variant(ButtonVariant::PRIMARY),
@@ -267,8 +339,8 @@ final class ButtonToolbarTest extends \PHPUnit\Framework\TestCase
     {
         Assert::equalsWithoutLE(
             <<<HTML
-            <div class="btn-toolbar" aria-label="Toolbar with button groups" role="toolbar">
-            <div class="btn-group me-2" aria-label="First group" role="group">
+            <div class="btn-toolbar" role="toolbar">
+            <div class="btn-group" role="group">
             <button type="button" class="btn btn-primary">1</button>
             <button type="button" class="btn btn-primary">2</button>
             <button type="button" class="btn btn-primary">3</button>
@@ -277,11 +349,8 @@ final class ButtonToolbarTest extends \PHPUnit\Framework\TestCase
             </div>
             HTML,
             ButtonToolbar::widget()
-                ->ariaLabel('Toolbar with button groups')
                 ->buttonGroups(
                     ButtonGroup::widget()
-                        ->addClass('me-2')
-                        ->ariaLabel('First group')
                         ->buttons(
                             Button::widget()->id(false)->label('1')->variant(ButtonVariant::PRIMARY),
                             Button::widget()->id(false)->label('2')->variant(ButtonVariant::PRIMARY),
@@ -295,13 +364,46 @@ final class ButtonToolbarTest extends \PHPUnit\Framework\TestCase
         );
     }
 
+    public function testIdWithSetAttributes(): void
+    {
+        Assert::equalsWithoutLE(
+            <<<HTML
+            <div id="test-id" class="btn-toolbar" role="toolbar">
+            <div class="btn-group" role="group">
+            <button type="button" class="btn btn-primary">1</button>
+            <button type="button" class="btn btn-primary">2</button>
+            <button type="button" class="btn btn-primary">3</button>
+            <button type="button" class="btn btn-primary">4</button>
+            </div>
+            </div>
+            HTML,
+            ButtonToolbar::widget()
+                ->attributes(['id' => 'test-id'])
+                ->buttonGroups(
+                    ButtonGroup::widget()
+                        ->buttons(
+                            Button::widget()->id(false)->label('1')->variant(ButtonVariant::PRIMARY),
+                            Button::widget()->id(false)->label('2')->variant(ButtonVariant::PRIMARY),
+                            Button::widget()->id(false)->label('3')->variant(ButtonVariant::PRIMARY),
+                            Button::widget()->id(false)->label('4')->variant(ButtonVariant::PRIMARY),
+                        )
+                        ->id(false),
+                )
+                ->render(),
+        );
+    }
+
     public function testImmutability(): void
     {
         $buttonToolbar = ButtonToolbar::widget();
 
         $this->assertNotSame($buttonToolbar, $buttonToolbar->addAttributes([]));
         $this->assertNotSame($buttonToolbar, $buttonToolbar->addClass(''));
+        $this->assertNotSame($buttonToolbar, $buttonToolbar->addClass(''));
+        $this->assertNotSame($buttonToolbar, $buttonToolbar->addCssStyle(''));
         $this->assertNotSame($buttonToolbar, $buttonToolbar->ariaLabel(''));
+        $this->assertNotSame($buttonToolbar, $buttonToolbar->ariaLabel(''));
+        $this->assertNotSame($buttonToolbar, $buttonToolbar->attribute('', ''));
         $this->assertNotSame($buttonToolbar, $buttonToolbar->attributes([]));
         $this->assertNotSame($buttonToolbar, $buttonToolbar->buttonGroups());
         $this->assertNotSame($buttonToolbar, $buttonToolbar->class(''));

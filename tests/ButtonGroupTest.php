@@ -4,31 +4,34 @@ declare(strict_types=1);
 
 namespace Yiisoft\Yii\Bootstrap5\Tests;
 
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\TestCase;
 use Yiisoft\Html\Tag\Input\Checkbox;
 use Yiisoft\Html\Tag\Input\Radio;
 use Yiisoft\Yii\Bootstrap5\Button;
 use Yiisoft\Yii\Bootstrap5\ButtonGroup;
+use Yiisoft\Yii\Bootstrap5\ButtonSize;
 use Yiisoft\Yii\Bootstrap5\ButtonVariant;
 use Yiisoft\Yii\Bootstrap5\Tests\Support\Assert;
+use Yiisoft\Yii\Bootstrap5\Utility\BackgroundColor;
 
 /**
  * Tests for `ButtonGroup` widget.
- *
- * @group button-group
  */
-final class ButtonGroupTest extends \PHPUnit\Framework\TestCase
+#[Group('button-group')]
+final class ButtonGroupTest extends TestCase
 {
     public function testAddAttributes(): void
     {
         Assert::equalsWithoutLE(
             <<<HTML
-            <div class="btn-group test-class-definition" data-test="test" role="group">
+            <div class="btn-group" data-id="123" role="group">
             <button type="button" class="btn btn-secondary">Button B</button>
             <button type="button" class="btn btn-primary">Button A</button>
             </div>
             HTML,
-            ButtonGroup::widget(config: ['attributes()' => [['class' => 'test-class-definition']]])
-                ->addAttributes(['data-test' => 'test'])
+            ButtonGroup::widget()
+                ->addAttributes(['data-id' => '123'])
                 ->buttons(
                     Button::widget()->id(false)->label('Button B'),
                     Button::widget()->id(false)->label('Button A')->variant(ButtonVariant::PRIMARY),
@@ -41,7 +44,7 @@ final class ButtonGroupTest extends \PHPUnit\Framework\TestCase
     public function testAddClass(): void
     {
         $buttonGroupWidget = ButtonGroup::widget()
-            ->addClass('test-class', null)
+            ->addClass('test-class', null, BackgroundColor::PRIMARY)
             ->buttons(
                 Button::widget()->id(false)->label('Button B'),
                 Button::widget()->id(false)->label('Button A')->variant(ButtonVariant::PRIMARY),
@@ -50,7 +53,7 @@ final class ButtonGroupTest extends \PHPUnit\Framework\TestCase
 
         Assert::equalsWithoutLE(
             <<<HTML
-            <div class="btn-group test-class" role="group">
+            <div class="btn-group test-class bg-primary" role="group">
             <button type="button" class="btn btn-secondary">Button B</button>
             <button type="button" class="btn btn-primary">Button A</button>
             </div>
@@ -60,7 +63,7 @@ final class ButtonGroupTest extends \PHPUnit\Framework\TestCase
 
         Assert::equalsWithoutLE(
             <<<HTML
-            <div class="btn-group test-class test-class-1 test-class-2" role="group">
+            <div class="btn-group test-class bg-primary test-class-1 test-class-2" role="group">
             <button type="button" class="btn btn-secondary">Button B</button>
             <button type="button" class="btn btn-primary">Button A</button>
             </div>
@@ -69,17 +72,79 @@ final class ButtonGroupTest extends \PHPUnit\Framework\TestCase
         );
     }
 
-    public function testAttributes(): void
+    public function testAddCssStyle(): void
+    {
+        $buttonGroupWidget = ButtonGroup::widget()
+            ->addCssStyle('color: red;')
+            ->buttons(
+                Button::widget()->id(false)->label('Button B'),
+                Button::widget()->id(false)->label('Button A')->variant(ButtonVariant::PRIMARY),
+            )
+            ->id(false);
+
+        Assert::equalsWithoutLE(
+            <<<HTML
+            <div class="btn-group" style="color: red;" role="group">
+            <button type="button" class="btn btn-secondary">Button B</button>
+            <button type="button" class="btn btn-primary">Button A</button>
+            </div>
+            HTML,
+            $buttonGroupWidget->render(),
+        );
+
+        Assert::equalsWithoutLE(
+            <<<HTML
+            <div class="btn-group" style="color: red; font-weight: bold;" role="group">
+            <button type="button" class="btn btn-secondary">Button B</button>
+            <button type="button" class="btn btn-primary">Button A</button>
+            </div>
+            HTML,
+            $buttonGroupWidget->addCssStyle('font-weight: bold;')->render(),
+        );
+    }
+
+    public function testAddCssStyleWithOverwriteFalse(): void
+    {
+        $buttonGroupWidget = ButtonGroup::widget()
+            ->addCssStyle('color: red;')
+            ->buttons(
+                Button::widget()->id(false)->label('Button B'),
+                Button::widget()->id(false)->label('Button A')->variant(ButtonVariant::PRIMARY),
+            )
+            ->id(false);
+
+        Assert::equalsWithoutLE(
+            <<<HTML
+            <div class="btn-group" style="color: red;" role="group">
+            <button type="button" class="btn btn-secondary">Button B</button>
+            <button type="button" class="btn btn-primary">Button A</button>
+            </div>
+            HTML,
+            $buttonGroupWidget->render(),
+        );
+
+        Assert::equalsWithoutLE(
+            <<<HTML
+            <div class="btn-group" style="color: red;" role="group">
+            <button type="button" class="btn btn-secondary">Button B</button>
+            <button type="button" class="btn btn-primary">Button A</button>
+            </div>
+            HTML,
+            $buttonGroupWidget->addCssStyle('color: blue;', false)->render(),
+        );
+    }
+
+    public function testAttribute(): void
     {
         Assert::equalsWithoutLE(
             <<<HTML
-            <div class="btn-group test" data-test="test" role="group">
+            <div class="btn-group" data-id="123" role="group">
             <button type="button" class="btn btn-secondary">Button B</button>
             <button type="button" class="btn btn-primary">Button A</button>
             </div>
             HTML,
             ButtonGroup::widget()
-                ->attributes(['class' => 'test', 'data-test' => 'test'])
+                ->attribute('data-id', '123')
                 ->buttons(
                     Button::widget()->id(false)->label('Button B'),
                     Button::widget()->id(false)->label('Button A')->variant(ButtonVariant::PRIMARY),
@@ -89,21 +154,22 @@ final class ButtonGroupTest extends \PHPUnit\Framework\TestCase
         );
     }
 
-    public function testAttributesWithId(): void
+    public function testAttributes(): void
     {
         Assert::equalsWithoutLE(
             <<<HTML
-            <div id="test-id" class="btn-group test" data-test="test" role="group">
+            <div class="btn-group test-class" role="group">
             <button type="button" class="btn btn-secondary">Button B</button>
             <button type="button" class="btn btn-primary">Button A</button>
             </div>
             HTML,
             ButtonGroup::widget()
-                ->attributes(['class' => 'test', 'data-test' => 'test', 'id' => 'test-id'])
+                ->attributes(['class' => 'test-class'])
                 ->buttons(
                     Button::widget()->id(false)->label('Button B'),
                     Button::widget()->id(false)->label('Button A')->variant(ButtonVariant::PRIMARY),
                 )
+                ->id(false)
                 ->render(),
         );
     }
@@ -186,7 +252,7 @@ final class ButtonGroupTest extends \PHPUnit\Framework\TestCase
     {
         Assert::equalsWithoutLE(
             <<<HTML
-            <div class="btn-group custom-class another-class" role="group">
+            <div class="btn-group custom-class another-class bg-primary" role="group">
             <button type="button" class="btn btn-secondary">Button B</button>
             <button type="button" class="btn btn-primary">Button A</button>
             </div>
@@ -197,7 +263,7 @@ final class ButtonGroupTest extends \PHPUnit\Framework\TestCase
                     Button::widget()->id(false)->label('Button B'),
                     Button::widget()->id(false)->label('Button A')->variant(ButtonVariant::PRIMARY),
                 )
-                ->class('custom-class', 'another-class')
+                ->class('custom-class', 'another-class', BackgroundColor::PRIMARY)
                 ->id(false)
                 ->render(),
         );
@@ -260,20 +326,39 @@ final class ButtonGroupTest extends \PHPUnit\Framework\TestCase
         );
     }
 
+    public function testIdWithSetAttributes(): void
+    {
+        Assert::equalsWithoutLE(
+            <<<HTML
+            <div id="test-id" class="btn-group" role="group">
+            <button type="button" class="btn btn-secondary">Button B</button>
+            <button type="button" class="btn btn-primary">Button A</button>
+            </div>
+            HTML,
+            ButtonGroup::widget()
+                ->attributes(['id' => 'test-id'])
+                ->buttons(
+                    Button::widget()->id(false)->label('Button B'),
+                    Button::widget()->id(false)->label('Button A')->variant(ButtonVariant::PRIMARY),
+                )
+                ->render()
+        );
+    }
+
     public function testImmutability(): void
     {
         $buttonGroup = ButtonGroup::widget();
 
         $this->assertNotSame($buttonGroup, $buttonGroup->addAttributes([]));
         $this->assertNotSame($buttonGroup, $buttonGroup->addClass(''));
+        $this->assertNotSame($buttonGroup, $buttonGroup->addCssStyle(''));
         $this->assertNotSame($buttonGroup, $buttonGroup->ariaLabel(''));
+        $this->assertNotSame($buttonGroup, $buttonGroup->attribute('', ''));
         $this->assertNotSame($buttonGroup, $buttonGroup->attributes([]));
         $this->assertNotSame($buttonGroup, $buttonGroup->buttons(Button::widget()));
         $this->assertNotSame($buttonGroup, $buttonGroup->class(''));
         $this->assertNotSame($buttonGroup, $buttonGroup->id(false));
-        $this->assertNotSame($buttonGroup, $buttonGroup->largeSize());
-        $this->assertNotSame($buttonGroup, $buttonGroup->normalSize());
-        $this->assertNotSame($buttonGroup, $buttonGroup->smallSize());
+        $this->assertNotSame($buttonGroup, $buttonGroup->size(ButtonSize::LARGE));
         $this->assertNotSame($buttonGroup, $buttonGroup->vertical());
     }
 
@@ -297,8 +382,8 @@ final class ButtonGroupTest extends \PHPUnit\Framework\TestCase
                     Button::widget()->id(false)->label('Middle')->variant(ButtonVariant::OUTLINE_DARK),
                     Button::widget()->id(false)->label('Right')->variant(ButtonVariant::OUTLINE_DARK),
                 )
-                ->largeSize()
                 ->id(false)
+                ->size(ButtonSize::LARGE)
                 ->render(),
         );
     }
@@ -308,16 +393,6 @@ final class ButtonGroupTest extends \PHPUnit\Framework\TestCase
      */
     public function testNormalSize(): void
     {
-        $buttonGroup = ButtonGroup::widget()
-            ->ariaLabel('Normal button group')
-            ->buttons(
-                Button::widget()->id(false)->label('Left')->variant(ButtonVariant::OUTLINE_LIGHT),
-                Button::widget()->id(false)->label('Middle')->variant(ButtonVariant::OUTLINE_LIGHT),
-                Button::widget()->id(false)->label('Right')->variant(ButtonVariant::OUTLINE_LIGHT),
-            )
-            ->largeSize()
-            ->id(false);
-
         Assert::equalsWithoutLE(
             <<<HTML
             <div class="btn-group" aria-label="Normal button group" role="group">
@@ -326,7 +401,16 @@ final class ButtonGroupTest extends \PHPUnit\Framework\TestCase
             <button type="button" class="btn btn-outline-light">Right</button>
             </div>
             HTML,
-            $buttonGroup->normalSize()->render(),
+            ButtonGroup::widget()
+                ->ariaLabel('Normal button group')
+                ->buttons(
+                    Button::widget()->id(false)->label('Left')->variant(ButtonVariant::OUTLINE_LIGHT),
+                    Button::widget()->id(false)->label('Middle')->variant(ButtonVariant::OUTLINE_LIGHT),
+                    Button::widget()->id(false)->label('Right')->variant(ButtonVariant::OUTLINE_LIGHT),
+                )
+                ->id(false)
+                ->size(null)
+                ->render(),
         );
     }
 
@@ -364,14 +448,14 @@ final class ButtonGroupTest extends \PHPUnit\Framework\TestCase
     /**
      * @link https://getbootstrap.com/docs/5.2/components/button-group/#mixed-styles
      */
-    public function testRenderWithMizedStyle(): void
+    public function testRenderWithMixedStyle(): void
     {
         Assert::equalsWithoutLE(
             <<<HTML
             <div class="btn-group" aria-label="Basic mixed styles example" role="group">
             <button type="button" class="btn btn-danger">Left</button>
             <button type="button" class="btn btn-warning">Middle</button>
-            <button type="button" class="btn btn-success">Rigth</button>
+            <button type="button" class="btn btn-success">Right</button>
             </div>
             HTML,
             ButtonGroup::widget()
@@ -379,7 +463,7 @@ final class ButtonGroupTest extends \PHPUnit\Framework\TestCase
                 ->buttons(
                     Button::widget()->label('Left')->id(false)->variant(ButtonVariant::DANGER),
                     Button::widget()->label('Middle')->id(false)->variant(ButtonVariant::WARNING),
-                    Button::widget()->label('Rigth')->id(false)->variant(ButtonVariant::SUCCESS),
+                    Button::widget()->label('Right')->id(false)->variant(ButtonVariant::SUCCESS),
                 )
                 ->id(false)
                 ->render(),
@@ -431,7 +515,7 @@ final class ButtonGroupTest extends \PHPUnit\Framework\TestCase
                     Button::widget()->id(false)->label('Middle')->variant(ButtonVariant::OUTLINE_DARK),
                     Button::widget()->id(false)->label('Right')->variant(ButtonVariant::OUTLINE_DARK),
                 )
-                ->smallSize()
+                ->size(ButtonSize::SMALL)
                 ->id(false)
                 ->render(),
         );

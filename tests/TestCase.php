@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Yiisoft\Yii\Bootstrap5\Tests;
 
-use PHPUnit\Framework\TestCase as BaseTestCase;
 use Psr\Container\ContainerInterface;
 use Yiisoft\Di\Container;
 use Yiisoft\Di\ContainerConfig;
@@ -12,7 +11,7 @@ use Yiisoft\Widget\WidgetFactory;
 
 use function str_replace;
 
-abstract class TestCase extends BaseTestCase
+abstract class TestCase extends \PHPUnit\Framework\TestCase
 {
     private ContainerInterface $container;
 
@@ -30,11 +29,13 @@ abstract class TestCase extends BaseTestCase
         parent::tearDown();
     }
 
-    private static function loadHtml(string $html): string
+    private function loadHtml(string $html): string
     {
-        $output = str_replace(["\r", "\n"], '', $html);
-        $output = str_replace(['>', '</'], [">\n", "\n</"], $output);
-        $output = str_replace("\n\n", "\n", $output);
+        $output = str_replace(
+            ["\r", "\n", '>', '</', "\n\n"],
+            ['', '', ">\n", "\n</", "\n"],
+            $html
+        );
 
         return trim($output);
     }
@@ -44,14 +45,14 @@ abstract class TestCase extends BaseTestCase
      */
     protected function assertEqualsHTML(string $expected, string $actual, string $message = ''): void
     {
-        $expected = self::loadHtml($expected);
-        $actual = self::loadHtml($actual);
+        $expected = $this->loadHtml($expected);
+        $actual = $this->loadHtml($actual);
 
         $this->assertEquals($expected, $actual, $message);
     }
 
     /**
-     * Asserting two strings equality ignoring line endings.
+     * Asserting two strings are equal ignoring line endings.
      */
     protected function assertEqualsWithoutLE(string $expected, string $actual, string $message = ''): void
     {

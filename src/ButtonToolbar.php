@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Yiisoft\Yii\Bootstrap5;
 
+use BackedEnum;
 use Yiisoft\Html\Html;
 use Yiisoft\Html\Tag\Base\Tag;
 use Yiisoft\Html\Tag\Div;
+use Yiisoft\Widget\Widget;
 
-use function array_filter;
-use function array_merge;
 use function implode;
 
 /**
@@ -50,88 +50,145 @@ use function implode;
  *
  * @link https://getbootstrap.com/docs/5.3/components/button-group/#button-toolbar
  */
-final class ButtonToolbar extends \Yiisoft\Widget\Widget
+final class ButtonToolbar extends Widget
 {
     private const NAME = 'btn-toolbar';
     private array $attributes = [];
     /** @psalm-var ButtonGroup[]|Tag[] $buttonGroups */
     private array $buttonGroups = [];
-    private array $cssClass = [];
+    private array $cssClasses = [];
     private bool|string $id = true;
 
     /**
-     * Adds a sets of attributes for the button toolbar component.
+     * Adds a sets of attributes.
      *
-     * @param array $values Attribute values indexed by attribute names. e.g. `['id' => 'my-button-toolbar']`.
+     * @param array $attributes Attribute values indexed by attribute names. e.g. `['id' => 'my-id']`.
      *
      * @return self A new instance with the specified attributes added.
+     *
+     * Example usage:
+     * ```php
+     * $buttonToolbar->addAttributes(['data-id' => '123']);
+     * ```
      */
-    public function addAttributes(array $values): self
+    public function addAttributes(array $attributes): self
     {
         $new = clone $this;
-        $new->attributes = array_merge($this->attributes, $values);
+        $new->attributes = [...$new->attributes, ...$attributes];
 
         return $new;
     }
 
     /**
-     * Adds one or more CSS classes to the existing classes of the button toolbar component.
+     * Adds one or more CSS classes to the existing classes.
      *
      * Multiple classes can be added by passing them as separate arguments. `null` values are filtered out
      * automatically.
      *
-     * @param string|null ...$value One or more CSS class names to add. Pass `null` to skip adding a class.
-     * For example:
-     *
-     * ```php
-     * $buttonToolbar->addClass('custom-class', null, 'another-class');
-     * ```
+     * @param BackedEnum|string|null ...$class One or more CSS class names to add. Pass `null` to skip adding a class.
      *
      * @return self A new instance with the specified CSS classes added to existing ones.
      *
      * @link https://html.spec.whatwg.org/#classes
+     *
+     * Example usage:
+     * ```php
+     * $buttonToolbar->addClass('custom-class', null, 'another-class', BackGroundColor::PRIMARY);
+     * ```
      */
-    public function addClass(string|null ...$value): self
+    public function addClass(BackedEnum|string|null ...$class): self
     {
         $new = clone $this;
-        $new->cssClass = array_merge(
-            $new->cssClass,
-            array_filter($value, static fn ($v) => $v !== null)
-        );
+        $new->cssClasses = [...$this->cssClasses, ...$class];
 
         return $new;
     }
 
     /**
-     * Sets the ARIA label for the button toolbar component.
+     * Adds a CSS style.
      *
-     * @param string $value The ARIA label for the button toolbar component.
+     * @param array|string $style The CSS style. If an array, the values will be separated by a space. If a string, it
+     * will be added as is. For example, `color: red`. If the value is an array, the values will be separated by a
+     * space. e.g., `['color' => 'red', 'font-weight' => 'bold']` will be rendered as `color: red; font-weight: bold;`.
+     * @param bool $overwrite Whether to overwrite existing styles with the same name. If `false`, the new value will be
+     * appended to the existing one.
+     *
+     * @return self A new instance with the specified CSS style value added.
+     *
+     * Example usage:
+     * ```php
+     * $buttonToolbar->addCssStyle('color: red');
+     *
+     * // or
+     * $buttonToolbar->addCssStyle(['color' => 'red', 'font-weight' => 'bold']);
+     * ```
+     */
+    public function addCssStyle(array|string $style, bool $overwrite = true): self
+    {
+        $new = clone $this;
+        Html::addCssStyle($new->attributes, $style, $overwrite);
+
+        return $new;
+    }
+
+    /**
+     * Sets the ARIA label.
+     *
+     * @param string $label The ARIA label.
      *
      * @return self A new instance with the specified ARIA label.
      *
      * @link https://www.w3.org/TR/wai-aria-1.1/#aria-label
+     *
+     * Example usage:
+     * ```php
+     * $buttonToolbar->ariaLabel('Toolbar with button groups');
+     * ```
      */
-    public function ariaLabel(string $value): self
+    public function ariaLabel(string $label): self
+    {
+        return $this->attribute('aria-label', $label);
+    }
+
+    /**
+     * Adds a sets attribute value.
+     *
+     * @param string $name The attribute name.
+     * @param mixed $value The attribute value.
+     *
+     * @return self A new instance with the specified attribute added.
+     *
+     * Example usage:
+     * ```php
+     * $buttonToolbar->attribute('data-id', '123');
+     * ```
+     */
+    public function attribute(string $name, mixed $value): self
     {
         $new = clone $this;
-        $new->attributes['aria-label'] = $value;
+        $new->attributes[$name] = $value;
 
         return $new;
     }
 
     /**
-     * Sets the HTML attributes for the button toolbar component.
+     * Sets the HTML attributes.
      *
-     * @param array $values Attribute values indexed by attribute names.
+     * @param array $attributes Attribute values indexed by attribute names.
      *
      * @return self A new instance with the specified attributes.
      *
      * @see {\Yiisoft\Html\Html::renderTagAttributes()} for details on how attributes are being rendered.
+     *
+     * Example usage:
+     * ```php
+     * $buttonToolbar->attributes(['data-id' => '123']);
+     * ```
      */
-    public function attributes(array $values): self
+    public function attributes(array $attributes): self
     {
         $new = clone $this;
-        $new->attributes = $values;
+        $new->attributes = $attributes;
 
         return $new;
     }
@@ -139,78 +196,72 @@ final class ButtonToolbar extends \Yiisoft\Widget\Widget
     /**
      * List of buttons groups.
      *
-     * @param ButtonGroup|Tag ...$value The button group configuration.
+     * @param ButtonGroup|Tag ...$groups The button group.
      *
      * @return self A new instance with the specified buttons groups.
      */
-    public function buttonGroups(ButtonGroup|Tag ...$value): self
+    public function buttonGroups(ButtonGroup|Tag ...$groups): self
     {
         $new = clone $this;
-        $new->buttonGroups = $value;
+        $new->buttonGroups = $groups;
 
         return $new;
     }
 
     /**
-     * Replaces all existing CSS classes of the button toolbar component with the provided ones.
+     * Replaces all existing CSS classes with the specified one(s).
      *
      * Multiple classes can be added by passing them as separate arguments. `null` values are filtered out
      * automatically.
      *
-     * @param string|null ...$value One or more CSS class names to set. Pass `null` to skip setting a class.
-     * For example:
-     *
-     * ```php
-     * $buttonToolbar->class('custom-class', null, 'another-class');
-     * ```
+     * @param BackedEnum|string|null ...$class One or more CSS class names to set. Pass `null` to skip setting a class.
      *
      * @return self A new instance with the specified CSS classes set.
+     *
+     * Example usage:
+     * ```php
+     * $buttonToolbar->class('custom-class', null, 'another-class', BackGroundColor::PRIMARY);
+     * ```
      */
-    public function class(string|null ...$value): self
+    public function class(BackedEnum|string|null ...$class): self
     {
         $new = clone $this;
-        $new->cssClass = array_filter($value, static fn ($v) => $v !== null);
+        $new->cssClasses = $class;
 
         return $new;
     }
 
     /**
-     * Sets the ID of the button toolbar component.
+     * Sets the ID.
      *
-     * @param bool|string $value The ID of the button toolbar component. If `true`, an ID will be generated
-     * automatically.
+     * @param bool|string $id The ID of the component. If `true`, an ID will be generated automatically.
      *
      * @return self A new instance with the specified ID.
+     *
+     * Example usage:
+     * ```php
+     * $buttonToolbar->id('my-id');
+     * ```
      */
-    public function id(bool|string $value): self
+    public function id(bool|string $id): self
     {
         $new = clone $this;
-        $new->id = $value;
+        $new->id = $id;
 
         return $new;
     }
 
     /**
-     * Run the button toolbar widget.
+     * Run the widget.
      *
      * @return string The HTML representation of the element.
      */
     public function render(): string
     {
         $attributes = $this->attributes;
-        $attributes['role'] = 'toolbar';
         $classes = $attributes['class'] ?? null;
 
-        /** @psalm-var non-empty-string|null $id */
-        $id = match ($this->id) {
-            true => $attributes['id'] ?? Html::generateId(self::NAME . '-'),
-            '', false => null,
-            default => $this->id,
-        };
-
         unset($attributes['class'], $attributes['id']);
-
-        Html::addCssClass($attributes, [self::NAME, $classes, ...$this->cssClass]);
 
         $buttonGroup = implode("\n", $this->buttonGroups);
         $buttonsGroups = $buttonGroup === '' ? '' : "\n" . $buttonGroup . "\n";
@@ -219,6 +270,33 @@ final class ButtonToolbar extends \Yiisoft\Widget\Widget
             return '';
         }
 
-        return Div::tag()->attributes($attributes)->content($buttonsGroups)->encode(false)->id($id)->render();
+        return Div::tag()
+            ->attributes($attributes)
+            ->attribute('role', 'toolbar')
+            ->addClass(
+                self::NAME,
+                $classes,
+                ...$this->cssClasses,
+            )
+            ->content($buttonsGroups)
+            ->encode(false)
+            ->id($this->getId())
+            ->render();
+    }
+
+    /**
+     * Generates the ID.
+     *
+     * @return string|null The generated ID.
+     *
+     * @psalm-return non-empty-string|null The generated ID.
+     */
+    private function getId(): string|null
+    {
+        return match ($this->id) {
+            true => $this->attributes['id'] ?? Html::generateId(self::NAME . '-'),
+            '', false => null,
+            default => $this->id,
+        };
     }
 }

@@ -4,46 +4,35 @@ declare(strict_types=1);
 
 namespace Yiisoft\Yii\Bootstrap5\Tests;
 
+use InvalidArgumentException;
+use PHPUnit\Framework\Attributes\DataProviderExternal;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\TestCase;
 use Yiisoft\Yii\Bootstrap5\Alert;
 use Yiisoft\Yii\Bootstrap5\AlertVariant;
+use Yiisoft\Yii\Bootstrap5\Tests\Provider\AlertProvider;
 use Yiisoft\Yii\Bootstrap5\Tests\Support\Assert;
 use Yiisoft\Yii\Bootstrap5\Utility\BackgroundColor;
 
 /**
  * Tests for `Alert` widget.
- *
- * @group alert
  */
-final class AlertTest extends \PHPUnit\Framework\TestCase
+#[Group('alert')]
+final class AlertTest extends TestCase
 {
     public function testAddAttributes(): void
     {
         Assert::equalsWithoutLE(
             <<<HTML
-            <div id="test" class="alert alert-secondary test-class-definition" role="alert">
+            <div class="alert alert-secondary" data-id="123" role="alert">
             Body
             </div>
             HTML,
-            Alert::widget(config: ['attributes()' => [['class' => 'test-class-definition']]])
-                ->addAttributes(['id' => 'test'])
-                ->body('Body')
-                ->render(),
+            Alert::widget()->addAttributes(['data-id' => '123'])->body('Body')->id(false)->render(),
         );
     }
 
-    public function testAttributes(): void
-    {
-        Assert::equalsWithoutLE(
-            <<<HTML
-            <div class="alert alert-secondary test-class" role="alert">
-            Body
-            </div>
-            HTML,
-            Alert::widget()->attributes(['class' => 'test-class'])->body('Body')->id(false)->render(),
-        );
-    }
-
-    public function testAddCssClass(): void
+    public function testAddClass(): void
     {
         $alert = Alert::widget()->addClass('test-class', null, BackgroundColor::PRIMARY)->body('Body')->id(false);
 
@@ -109,6 +98,30 @@ final class AlertTest extends \PHPUnit\Framework\TestCase
             </div>
             HTML,
             $alert->addCssStyle('color: blue;', false)->render(),
+        );
+    }
+
+    public function testAttribute(): void
+    {
+        Assert::equalsWithoutLE(
+            <<<HTML
+            <div class="alert alert-secondary" data-id="123" role="alert">
+            Body
+            </div>
+            HTML,
+            Alert::widget()->attribute('data-id', '123')->body('Body')->id(false)->render(),
+        );
+    }
+
+    public function testAttributes(): void
+    {
+        Assert::equalsWithoutLE(
+            <<<HTML
+            <div class="alert alert-secondary test-class" role="alert">
+            Body
+            </div>
+            HTML,
+            Alert::widget()->attributes(['class' => 'test-class'])->body('Body')->id(false)->render(),
         );
     }
 
@@ -178,7 +191,7 @@ final class AlertTest extends \PHPUnit\Framework\TestCase
     {
         Assert::equalsWithoutLE(
             <<<HTML
-            <div id="test" class="alert alert-secondary alert-dismissible" role="alert">
+            <div class="alert alert-secondary alert-dismissible" role="alert">
             Body
             <button type="button" class="btn-close btn-lg" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
@@ -187,7 +200,7 @@ final class AlertTest extends \PHPUnit\Framework\TestCase
                 ->body('Body')
                 ->closeButtonAttributes(['class' => 'btn-lg'])
                 ->dismissable(true)
-                ->id('test')
+                ->id(false)
                 ->render(),
         );
     }
@@ -295,14 +308,6 @@ final class AlertTest extends \PHPUnit\Framework\TestCase
         );
     }
 
-    public function testDimissableWithCloseButtonWithTagNameEmpty(): void
-    {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Close button tag cannot be empty string.');
-
-        Alert::widget()->closeButtonTag('')->dismissable(true)->render();
-    }
-
     public function testHeader(): void
     {
         Assert::equalsWithoutLE(
@@ -320,14 +325,6 @@ final class AlertTest extends \PHPUnit\Framework\TestCase
                 ->headerAttributes(['class' => 'header-class'])
                 ->render(),
         );
-    }
-
-    public function testHeaderTagException(): void
-    {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Header tag cannot be empty string.');
-
-        Alert::widget()->header('Header')->headerTag('')->render();
     }
 
     public function testHeaderWithEncodeFalse(): void
@@ -372,11 +369,11 @@ final class AlertTest extends \PHPUnit\Framework\TestCase
     {
         Assert::equalsWithoutLE(
             <<<HTML
-            <div id="test" class="alert alert-secondary" role="alert">
+            <div id="test-id" class="alert alert-secondary" role="alert">
             Body
             </div>
             HTML,
-            Alert::widget()->id('test')->body('Body')->render(),
+            Alert::widget()->id('test-id')->body('Body')->render(),
         );
     }
 
@@ -408,11 +405,11 @@ final class AlertTest extends \PHPUnit\Framework\TestCase
     {
         Assert::equalsWithoutLE(
             <<<HTML
-            <div id="test" class="alert alert-secondary" role="alert">
+            <div id="test-id" class="alert alert-secondary" role="alert">
             Body
             </div>
             HTML,
-            Alert::widget()->attributes(['id' => 'test'])->body('Body')->render(),
+            Alert::widget()->attributes(['id' => 'test-id'])->body('Body')->render(),
         );
     }
 
@@ -422,6 +419,8 @@ final class AlertTest extends \PHPUnit\Framework\TestCase
 
         $this->assertNotSame($alert, $alert->addAttributes([]));
         $this->assertNotSame($alert, $alert->addClass(''));
+        $this->assertNotSame($alert, $alert->addCssStyle(''));
+        $this->assertNotSame($alert, $alert->attribute('', ''));
         $this->assertNotSame($alert, $alert->attributes([]));
         $this->assertNotSame($alert, $alert->body('', true));
         $this->assertNotSame($alert, $alert->class(''));
@@ -501,14 +500,28 @@ final class AlertTest extends \PHPUnit\Framework\TestCase
                 ->body('Body')
                 ->dismissable(true)
                 ->id(false)
-                ->templateContent("\n{toggle}\n{body}\n")
+                ->templateContent("\n{toggler}\n{body}\n")
                 ->render(),
         );
     }
 
-    /**
-     * @dataProvider \Yiisoft\Yii\Bootstrap5\Tests\Provider\AlertProvider::variant()
-     */
+    public function testThrowExceptionForDimissableWithCloseButtonWithTagNameEmpty(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Close button tag cannot be empty string.');
+
+        Alert::widget()->closeButtonTag('')->dismissable(true)->render();
+    }
+
+    public function testThrowExceptionForHeaderTagException(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Header tag cannot be empty string.');
+
+        Alert::widget()->header('Header')->headerTag('')->render();
+    }
+
+    #[DataProviderExternal(AlertProvider::class, 'variant')]
     public function testVariant(AlertVariant $alertVariant, string $expected): void
     {
         Assert::equalsWithoutLE(
